@@ -88,6 +88,7 @@ class StatesManager:
         """
         self._last_committed_id.clear()
         self._pending.clear()
+        self._last_reported.clear()
         # _oldest_ts is a database aggregate, not session state.
 
     def load_from_db(self, session: Session) -> None:
@@ -122,6 +123,10 @@ class StatesManager:
             last_committed_ids_reversed
         ):
             last_committed_ids.pop(last_committed_ids_reversed[purged_state_id], None)
+
+        # and any last reported timestamp still waiting to be written to it
+        for purged_state_id in purged_state_ids.intersection(self._last_reported):
+            del self._last_reported[purged_state_id]
 
     def evict_purged_entity_ids(self, purged_entity_ids: set[str]) -> None:
         """Evict purged entity_ids from the committed states.
