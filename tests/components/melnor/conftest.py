@@ -238,7 +238,8 @@ def mock_melnor_device():
         device.mac = FAKE_ADDRESS_1
         device.model = "test_model"
         device.name = "test_melnor"
-        device.rssi = -50
+        # Bleak 1.0 removed BLEDevice.rssi, so the library's Device.rssi raises
+        del device.rssi
 
         device.zone1 = MockValve(0)
         device.zone2 = MockValve(1)

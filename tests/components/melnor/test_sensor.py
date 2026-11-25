@@ -1,6 +1,7 @@
 """Test the Melnor sensors."""
 
 from datetime import timedelta
+from unittest.mock import patch
 
 from freezegun import freeze_time
 from pytest_homeassistant.common import async_fire_time_changed
@@ -12,6 +13,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
 from .conftest import (
+    FAKE_SERVICE_INFO_1,
     mock_config_entry,
     mock_melnor_device,
     patch_async_ble_device_from_address,
@@ -140,6 +142,10 @@ async def test_rssi_sensor(
         patch_async_ble_device_from_address(),
         patch_melnor_device(device),
         patch_async_register_callback(),
+        patch(
+            "homeassistant.components.bluetooth.async_last_service_info",
+            return_value=FAKE_SERVICE_INFO_1,
+        ) as mock_last_service_info,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -167,3 +173,14 @@ async def test_rssi_sensor(
         )
         assert rssi.attributes["device_class"] == SensorDeviceClass.SIGNAL_STRENGTH
         assert rssi.attributes["state_class"] == SensorStateClass.MEASUREMENT
+        assert rssi.state == "-63"
+
+        # No advertisement seen yet
+        mock_last_service_info.return_value = None
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=10))
+        await hass.async_block_till_done()
+
+        rssi = hass.states.get(entity_id)
+
+        assert rssi is not None
+        assert rssi.state == "unknown"
