@@ -598,8 +598,9 @@ class OverkizConfigFlow(
         self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle ZeroConf discovery."""
-        properties = discovery_info.properties
-        gateway_id = properties["gateway_pin"]
+        # The TXT record doesn't always carry the PIN (seen on a TaHoma Switch)
+        if not (gateway_id := discovery_info.properties.get("gateway_pin")):
+            return self.async_abort(reason="missing_gateway_pin")
         hostname = discovery_info.hostname
 
         LOGGER.debug(

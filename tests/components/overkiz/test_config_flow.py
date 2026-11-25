@@ -1389,6 +1389,34 @@ async def test_zeroconf_flow_already_configured(hass: HomeAssistant) -> None:
     assert result["reason"] == "already_configured"
 
 
+@pytest.mark.parametrize(
+    "discovery_info", [FAKE_ZERO_CONF_INFO, FAKE_ZERO_CONF_INFO_LOCAL]
+)
+async def test_zeroconf_flow_missing_gateway_pin(
+    hass: HomeAssistant, discovery_info: ZeroconfServiceInfo
+) -> None:
+    """Test that zeroconf aborts when the gateway doesn't advertise its PIN."""
+    properties = dict(discovery_info.properties)
+    del properties["gateway_pin"]
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        data=ZeroconfServiceInfo(
+            ip_address=discovery_info.ip_address,
+            ip_addresses=discovery_info.ip_addresses,
+            port=discovery_info.port,
+            hostname=discovery_info.hostname,
+            type=discovery_info.type,
+            name=discovery_info.name,
+            properties=properties,
+        ),
+        context={"source": config_entries.SOURCE_ZEROCONF},
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "missing_gateway_pin"
+
+
 @pytest.fixture
 async def setup_rexel_credentials(hass: HomeAssistant) -> None:
     """Set up the application credential used by the Rexel OAuth2 flow."""
