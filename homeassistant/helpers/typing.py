@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 from functools import partial
-from typing import TYPE_CHECKING, Any, Never
+from typing import TYPE_CHECKING, Any, Never, override
 
 import probatio
 
@@ -31,11 +31,26 @@ type VolDictType = dict[str | probatio.Marker, Any]
 type QueryType = Any
 
 Undefined = sentinel("Undefined")
+
+
+class _UndefinedTypeMeta(type):
+    """Make isinstance(value, UndefinedType) true only for Undefined."""
+
+    @override
+    def __instancecheck__(cls, instance: object) -> bool:
+        return instance is Undefined
+
+
+class _UndefinedType(metaclass=_UndefinedTypeMeta):
+    """Deprecated stand-in for the old UndefinedType class."""
+
+
 _DEPRECATED_UNDEFINED = DeprecatedAlias(
     Undefined, "homeassistant.helpers.typing.Undefined", "2027.12"
 )
+# A class, not the sentinel, so isinstance(value, UndefinedType) keeps working
 _DEPRECATED_UndefinedType = DeprecatedAlias(
-    Undefined, "homeassistant.helpers.typing.Undefined", "2027.12"
+    _UndefinedType, "homeassistant.helpers.typing.Undefined", "2027.12"
 )
 
 if TYPE_CHECKING:

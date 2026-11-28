@@ -23,7 +23,7 @@ def test_all() -> None:
         ),
         (
             "UndefinedType",
-            ha_typing.Undefined,
+            ha_typing._UndefinedType,
             "homeassistant.helpers.typing.Undefined",
         ),
     ],
@@ -43,3 +43,12 @@ def test_deprecated_undefined_aliases(
         "2027.12",
         replacement_name=replacement_name,
     )
+
+
+def test_deprecated_undefined_type_isinstance() -> None:
+    """Test isinstance with the deprecated UndefinedType still works."""
+    undefined_type = ha_typing._UndefinedType
+    assert isinstance(ha_typing.Undefined, undefined_type)
+    assert not isinstance(None, undefined_type)
+    assert not isinstance("Undefined", undefined_type)
+    assert not isinstance(ha_typing.sentinel("Other"), undefined_type)
